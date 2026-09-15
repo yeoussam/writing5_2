@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daniel Interview & Newspaper Helper v7</title>
+<style>
+:root{--bg:#f4f5f6;--card:#fff;--ink:#202428;--muted:#66707a;--line:#d8dde2;--dark:#30353a;--soft:#eef1f3;--paper:#fffdf8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:18px}header{background:var(--dark);color:#fff;border-radius:17px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+header h1{margin:0;font-size:24px}header p{margin:3px 0 0;color:#e7e9eb;font-size:13px}.badge{background:#fff;color:var(--dark);padding:7px 11px;border-radius:999px;font-size:12px;font-weight:700}
+.grid{display:grid;grid-template-columns:335px 1fr;gap:16px;margin-top:16px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 18px rgba(0,0,0,.04)}
+.side{padding:17px;align-self:start;position:sticky;top:14px}.side h2{font-size:16px;margin:0 0 9px}.side h3{font-size:14px;margin:17px 0 7px}
+.case{border:1px solid var(--line);border-radius:11px;background:#fafafa;padding:11px;font-size:13px}.case ul{padding-left:19px;margin:7px 0}
+.suspects{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:7px}.suspects th,.suspects td{border:1px solid var(--line);padding:5px;text-align:center}.suspects th{background:var(--soft)}
+.topics{display:flex;flex-wrap:wrap;gap:6px}.topic{font-size:12px;border:1px solid #aeb5bc;background:#fff;border-radius:999px;padding:5px 8px}.note{font-size:12px;color:var(--muted)}
+.main{min-height:780px;display:flex;flex-direction:column;overflow:hidden}.progressWrap{padding:14px 17px;border-bottom:1px solid var(--line);background:#fbfbfc}
+.progressText{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}.progress{height:8px;background:#e6e9ec;border-radius:999px;overflow:hidden}.bar{height:100%;width:0;background:var(--dark);transition:.25s}
+.stage{padding:22px;overflow:auto}.stage h2{margin-top:0}.stage h3{margin-bottom:7px}
+.example{border:1px solid var(--line);background:#fafafa;border-radius:11px;padding:14px;font-size:13.5px;max-height:430px;overflow:auto}.example p{margin:7px 0}
+.analysisGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}.field input,.field textarea{width:100%;border:1px solid #aeb5bd;border-radius:9px;padding:10px;font-size:14px}.field textarea{min-height:90px;resize:vertical}
+.questionCard{border:1px solid var(--line);background:#fafafa;border-radius:11px;padding:12px;margin:9px 0}.questionRow{display:flex;gap:8px}.questionRow input{flex:1;border:1px solid #abb2b9;border-radius:9px;padding:10px;font-size:14px}
+.feedback{margin-top:8px;border-left:4px solid var(--dark);background:#f8f9fa;padding:10px 12px;border-radius:8px;font-size:13px}.ok{border-left-color:#626b73}
+button{border:0;border-radius:9px;background:var(--dark);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}button.secondary{background:#fff;color:var(--dark);border:1px solid #abb2b9}button:disabled{opacity:.45;cursor:not-allowed}
+.chat{padding:19px;flex:1;overflow:auto;max-height:570px}.msg{display:flex;margin:9px 0}.bot{justify-content:flex-start}.user{justify-content:flex-end}.bubble{max-width:84%;padding:11px 13px;border-radius:13px;font-size:14.5px;white-space:pre-wrap}.bot .bubble{background:var(--soft);border:1px solid var(--line);border-bottom-left-radius:5px}.user .bubble{background:var(--dark);color:#fff;border-bottom-right-radius:5px}
+.composer{border-top:1px solid var(--line);padding:13px 15px;background:#fff}.row{display:flex;gap:7px}.row input{flex:1;border:1px solid #abb2b9;border-radius:10px;padding:11px 12px;font-size:15px}
+.helper{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:7px}.mini{font-size:12px;color:var(--muted)}
+.qaList{display:grid;gap:7px;margin-top:10px}.qaItem{border:1px solid var(--line);background:#fafafa;border-radius:9px;padding:9px;font-size:13px}
+.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.guide{border:1px solid var(--line);background:#fbfbfc;border-radius:10px;padding:11px;font-size:13px}.guide ol{margin:5px 0;padding-left:20px}
+.newspaper{background:var(--paper);border:2px solid #222;padding:22px;margin:20px;font-family:Georgia,"Times New Roman",serif}.paperMast{text-align:center;border-bottom:4px double #222;padding-bottom:8px;margin-bottom:13px}.paperMast h1{font-size:38px;margin:0}.paperHeadline{font-size:28px;line-height:1.15;font-weight:700;margin:14px 0 8px}.byline{font-size:12px;border-bottom:1px solid #777;padding-bottom:7px;margin-bottom:14px}
+.paperGrid{display:grid;grid-template-columns:1.45fr .8fr;gap:18px}.articleText{font-size:15px;line-height:1.7;white-space:pre-wrap}.summaryCard{border:1px solid #555;padding:12px;font-family:Arial,sans-serif}.summaryCard h3{margin:0 0 8px;font-family:Georgia,serif}.summaryCard p{font-size:12px;margin:8px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 20px 20px}
+.capture .wrap>header,.capture .grid>.side,.capture .progressWrap,.capture .actions{display:none!important}.capture .grid{display:block;margin:0}.capture .main{border:0;box-shadow:none}.capture .newspaper{margin:0;min-height:100vh}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.side{position:static}.analysisGrid,.summaryGrid,.paperGrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>Daniel Interview & Newspaper Helper</h1><p>Lesson 5 · Interview → Newspaper</p></div><div class="badge">Analyze → Ask → Interview → Report</div></header>
+<div class="grid">
+<aside class="card side">
+<h2>CASE FILE</h2>
+<div class="case">
+<b>Situation</b>
+<p>Yesterday after lunch, someone broke a window in the classroom. A student saw someone running out of the classroom.</p>
+<b>Eyewitness Statement</b>
+<ul><li>taller than 165 cm</li><li>wearing glasses</li><li>wearing a striped hoodie</li></ul>
+<b>Suspects</b>
+<table class="suspects"><tr><th>Name</th><th>Height</th><th>Glasses</th><th>Hoodie</th></tr>
+<tr><td>Alex</td><td>160</td><td>✓</td><td>striped</td></tr>
+<tr><td>Ben</td><td>170</td><td>✗</td><td>striped</td></tr>
+<tr><td>Chris</td><td>168</td><td>✓</td><td>plain</td></tr>
+<tr><td>Daniel</td><td>172</td><td>✓</td><td>striped</td></tr></table>
+</div>
+<h3>Interview Topics</h3><p class="note">질문 문장은 학생이 직접 만듭니다.</p>
+<div class="topics"><span class="topic">시간</span><span class="topic">장소</span><span class="topic">옷차림</span><span class="topic">당시 행동</span><span class="topic">사건 원인</span><span class="topic">사건 후 행동</span><span class="topic">감정</span><span class="topic">배운 점</span></div>
+</aside>
+
+<main class="card main">
+<div class="progressWrap"><div class="progressText"><span id="phase">STEP 1 · Example Interview</span><span id="num">1 / 4</span></div><div class="progress"><div class="bar" id="bar" style="width:25%"></div></div></div>
+
+<section id="step1" class="stage">
+<h2>STEP 1. 예시 인터뷰 분석하기</h2>
+<p class="note">교과서 본문의 사건 용의자 중 한 명인 Andres Lozano와의 인터뷰를 읽어보고, 인터뷰의 질문 흐름과 정보의 구체성을 살펴봅시다.</p>
+<div class="example">
+<p><b>An Interview with Mr. Lozano</b></p>
+<p><b>Interviewer:</b> Hi, Mr. Lozano! Thank you for your time. Where were you last Saturday?<br><b>Mr. Lozano:</b> Hi. Last Saturday, there was a community event in the park. I was there all day.</p>
+<p><b>Interviewer:</b> Who did you go to the event with?<br><b>Mr. Lozano:</b> I went alone. My friend didn’t come.</p>
+<p><b>Interviewer:</b> What did you do after that?<br><b>Mr. Lozano:</b> I got home about 6 p.m. and went to bed at 11 o’clock.</p>
+<p><b>Interviewer:</b> OK. Do you know Camila’s Bakery?<br><b>Mr. Lozano:</b> Yes, it’s near my workplace.</p>
+<p><b>Interviewer:</b> Did you go there last Friday?<br><b>Mr. Lozano:</b> Yes, I did. I bought a sandwich for lunch.</p>
+<p><b>Interviewer:</b> I see. Is your hair naturally black?<br><b>Mr. Lozano:</b> No, it’s brown.</p>
+<p><b>Interviewer:</b> Thank you. Oh, one more thing! How tall are you?<br><b>Mr. Lozano:</b> I’m a little shorter than 180 cm.</p>
+</div>
+<div class="analysisGrid">
+<div class="field"><label>① 범인을 추론하는 데 유용해 보이는 질문 2개를 골라 적어 보세요.</label><textarea id="useful"></textarea></div>
+<div class="field"><label>② 상대적으로 덜 유용해 보이는 질문 1개를 골라 적어 보세요.</label><textarea id="lessUseful"></textarea></div>
+</div>
+<div class="field"><label>③ 좋은 인터뷰 질문은 어떤 특징이 있다고 생각하나요? 우리말로 한 문장 적어보세요.</label><input id="analysisNote"></div>
+<button id="toStep2">답변 피드백 받기</button>
+<button id="proceedStep2" class="secondary" style="display:none;margin-left:6px">피드백 확인 → 질문 작성하기</button>
+<div id="step1Feedback" class="feedback" style="display:none"></div>
+</section>
+
+<section id="step2" class="stage" style="display:none">
+<h2>STEP 2. 인터뷰 질문 작성하기</h2>
+<p>Daniel에게 물어볼 질문을 <b>4개 이상</b> 직접 영어로 작성하세요. 질문의 주제는 자유롭게 선택할 수 있습니다.</p>
+<div class="guide">질문의 내용은 직접 정하세요. 챗봇은 대신 질문을 만들어주지 않습니다. 영어로 질문하기 어려운 경우에는 <b>'도움'</b>이라고 입력하면 <b>핵심 표현 → 힌트 → 문장틀</b> 순서로 필요한 만큼만 도와줍니다.</div>
+<div id="questionCards"></div>
+<button id="addQuestion" class="secondary">+ 질문 추가</button>
+<button id="toStep3" disabled>질문 작성 완료 → Daniel 인터뷰</button>
+<div id="questionQuality" class="feedback" style="display:none;margin-top:10px"></div>
+</section>
+
+<section id="step3" style="display:none;flex:1;flex-direction:column">
+<div class="stage" style="padding-bottom:8px"><h2>STEP 3. Daniel과 인터뷰하기</h2><p class="note">작성한 질문을 하나씩 Daniel에게 물어보세요. 답변은 자동으로 기록됩니다.</p><div id="preparedQuestions" class="qaList"></div></div>
+<div class="chat" id="chat"></div>
+<div class="composer"><div id="evidenceAudit" class="feedback" style="display:none;margin-bottom:8px"></div><div class="helper"><span class="mini" id="interviewStatus">준비한 질문을 모두 인터뷰하세요.</span><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button id="toStep4" class="secondary" disabled>인터뷰 근거 확인하기</button><button id="supplementBtn" class="secondary" style="display:none">질문 보충하기</button><button id="articleBtn" style="display:none">근거 충분 → 신문기사 작성</button></div></div></div>
+</section>
+
+<section id="step4" class="stage" style="display:none">
+<h2>STEP 4. 신문기사 작성하기</h2>
+<div class="guide"><b>기사 구성 가이드</b><ol><li><b>Summary:</b> 사건의 What / When / Where / Other Information</li><li><b>Main Article:</b> 사건 상황 + Daniel과의 인터뷰에서 알게 된 내용</li><li><b>Ending:</b> 사건 후 행동, 감정, 배운 점 중 필요한 내용을 선택</li></ol>인터뷰 내용을 그대로 복사하기보다 기사 문장으로 다시 정리해 보세요.</div>
+
+<h3>Interview Notes</h3><div id="interviewNotes" class="qaList"></div>
+
+<h3>Summary of the Case</h3>
+<div class="summaryGrid">
+<div class="field"><label>What happened?</label><input id="sumWhat"></div>
+<div class="field"><label>When did it happen?</label><input id="sumWhen"></div>
+<div class="field"><label>Where did it happen?</label><input id="sumWhere"></div>
+<div class="field"><label>Other Information</label><input id="sumOther"></div>
+</div>
+<div class="field"><label>Headline</label><input id="headline" placeholder="Write your own headline."></div>
+<div class="field"><label>Main Article</label><textarea id="article" style="min-height:220px" placeholder="Write your newspaper article in English."></textarea></div>
+<button id="checkArticle">기사 점검하기</button>
+<div id="articleFeedback" class="feedback" style="display:none"></div>
+<div style="margin-top:10px"><button id="makeFinal" class="secondary">Final Newspaper 만들기</button></div>
+</section>
+
+<section id="finalScreen" style="display:none">
+<div class="newspaper" id="paper"><div class="paperMast"><h1>School Daily News</h1><div>Special Classroom Edition</div></div><div class="paperHeadline" id="paperHeadline"></div>
+<div class="byline">Class <input id="classNo" style="width:55px;border:0;border-bottom:1px solid #555;background:transparent"> No. <input id="studentNo" style="width:55px;border:0;border-bottom:1px solid #555;background:transparent"> Reporter <input id="studentName" style="width:120px;border:0;border-bottom:1px solid #555;background:transparent"></div>
+<div class="paperGrid"><div class="articleText" id="paperArticle"></div><div class="summaryCard"><h3>Summary of the Case</h3><p><b>1. What happened?</b><br><span id="pWhat"></span></p><p><b>2. When did it happen?</b><br><span id="pWhen"></span></p><p><b>3. Where did it happen?</b><br><span id="pWhere"></span></p><p><b>4. Other Information</b><br><span id="pOther"></span></p><hr><p><b>Interview with Daniel</b><br><span id="pInterview"></span></p></div></div></div>
+<div class="actions"><button id="captureBtn">캡처용 화면 보기</button><button id="backBtn" class="secondary">기사 다시 수정하기</button></div>
+</section>
+</main></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let questions=[],answers=[],questionCount=4,helpState={},interviewMemory={};
+const chat=$('chat');
+
+function setStep(n,label){$('phase').textContent=`STEP ${n} · ${label}`;$('num').textContent=`${n} / 4`;$('bar').style.width=`${n*25}%`;}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function addMsg(text,who='bot',html=false){const r=document.createElement('div');r.className='msg '+who;const b=document.createElement('div');b.className='bubble';html?b.innerHTML=text:b.textContent=text;r.appendChild(b);chat.appendChild(r);chat.scrollTop=chat.scrollHeight;}
+function norm(s){return s.toLowerCase().replace(/[’‘]/g,"'").replace(/[.,!?;:'"]/g,' ').replace(/\s+/g,' ').trim();}
+function has(t,a){return a.some(x=>t.includes(x));}
+
+function analyzeIntent(raw){
+ const t=norm(raw);
+ if(has(t,['how tall','height']))return'height';
+ if(has(t,['glass','glasses']))return'glasses';
+ if(has(t,['hoodie','wearing','wear','clothes','clothing','shirt','jacket']))return'clothes';
+ if(has(t,['what time','when did','when were','what day']))return'when';
+ if(has(t,['where were','where did','where was','what place']))return'where';
+ if(has(t,['did you break','break the window','broke the window','was it you']))return'admission';
+ if(has(t,['why did you break','why break','why was the window broken']))return'whyBreak';
+ if(has(t,['how did','how was'])&&has(t,['window','break','broken']))return'howBreak';
+ if(has(t,['what were you doing','what did you do','what you doing','doing after lunch']))return'doing';
+ if(has(t,['why were you','why did you go','why did you come'])&&has(t,['classroom','class','room']))return'whyThere';
+ if(has(t,['were you alone','who were you with','alone']))return'alone';
+ if(has(t,['why did you run','why run','ran away','run away']))return'ran';
+ if(has(t,['what did you do after','what happened after','after that','next']))return'after';
+ if(has(t,['how did you feel','how do you feel','feel about','scared','sorry']))return'feeling';
+ if(has(t,['apolog','tell the teacher','teacher know','confess','admit']))return'apology';
+ if(has(t,['what did you learn','learn from','do it again','be careful','next time']))return'lesson';
+ if(has(t,['window']))return'windowGeneric';
+ return'unclear';
+}
+function grammarCheck(intent,raw){
+ const t=norm(raw),issues=[];let ok=false,frame='';
+ const cap=!/^[a-z]/.test(raw.trim()), qm=/\?\s*$/.test(raw.trim());
+ const rules={
+ height:[/^how tall are you\b/,'How tall are you?','키를 물을 때는 <b>How tall are you?</b> 형태를 사용해.'],
+ glasses:[/^(do you wear glasses|are you wearing glasses|were you wearing glasses)\b/,'Do you wear glasses?','평소 안경 착용을 물을 때는 <b>Do you wear glasses?</b>를 사용할 수 있어.'],
+ clothes:[/^(what were you wearing|what did you wear)\b/,'What were you wearing that day?','그때 입고 있던 옷은 <b>What were you wearing ...?</b>으로 물을 수 있어.'],
+ when:[/^(when did it happen|what time did it happen|when was it)\b/,'When did it happen?','시간은 <b>When did it happen?</b>처럼 물을 수 있어.'],
+ where:[/^(where were you|where did you go|where was it)\b/,'Where were you after lunch?','장소는 <b>Where were you ...?</b>의 어순으로 써.'],
+ admission:[/^(did you break the window|was it you|did you do it)\b/,'Did you break the window?','과거 행동은 <b>Did + you + 동사원형</b> 순서로 써.'],
+ whyBreak:[/^(why did you break the window|why was the window broken)\b/,'Why did you break the window?','이유는 <b>Why did you + 동사원형 ...?</b>으로 물을 수 있어.'],
+ howBreak:[/^(how did the window break|how was the window broken|how did you break the window)\b/,'How did the window break?','방법은 <b>How did + 주어 + 동사원형 ...?</b> 순서로 써.'],
+ doing:[/^(what were you doing|what did you do)\b/,'What were you doing after lunch?','당시 행동은 <b>What were you doing ...?</b>으로 물을 수 있어.'],
+ whyThere:[/^(why were you in the classroom|why did you go to the classroom|why did you go back to the classroom)\b/,'Why were you in the classroom?','이유는 <b>Why were you in ...?</b>으로 물을 수 있어.'],
+ alone:[/^(were you alone|who were you with|was anyone with you)\b/,'Were you alone?','혼자였는지는 <b>Were you alone?</b>으로 물을 수 있어.'],
+ ran:[/^(why did you run away|why did you run out)\b/,'Why did you run away?','<b>Why did you + 동사원형</b> 순서로 써.'],
+ after:[/^(what did you do after that|what did you do next|what happened after that)\b/,'What did you do after that?','다음 행동은 <b>What did you do after that?</b>처럼 물을 수 있어.'],
+ feeling:[/^(how did you feel|how do you feel|were you scared|are you sorry)\b/,'How did you feel?','감정은 <b>How did you feel?</b>처럼 물을 수 있어.'],
+ apology:[/^(did you apologize|did you tell your teacher|did you tell the teacher|did you admit it)\b/,'Did you apologize?','과거 행동은 <b>Did + you + 동사원형</b>으로 물어.'],
+ lesson:[/^(what did you learn|will you do it again|what will you do next time|will you be more careful)\b/,'What did you learn from this?','배운 점은 <b>What did you learn ...?</b>으로 물을 수 있어.']
+ };
+ if(intent==='unclear')return{ok:false,issues:['질문의 뜻을 이해하기 어려워. 무엇을 묻고 싶은지 다시 생각해 봐.'],frame:''};
+ if(intent==='windowGeneric')return{ok:false,issues:['window에 대해 무엇을 알고 싶은지 더 구체적으로 질문해 봐.'],frame:'How did the window break?'};
+ const r=rules[intent];if(r){ok=r[0].test(t);frame=r[1];if(!ok){
+   if(/did you broke/.test(t))issues.push('<b>did</b> 뒤에는 <b>break</b>를 써.');
+   else if(/did you wore/.test(t))issues.push('<b>did</b> 뒤에는 <b>wear</b>를 써.');
+   else if(/did you did/.test(t))issues.push('<b>did</b> 뒤에는 <b>do</b>를 써.');
+   else if(/did you felt/.test(t))issues.push('<b>did</b> 뒤에는 <b>feel</b>을 써.');
+   else if(/where you were/.test(t))issues.push('<b>Where + were + you</b> 순서로 써.');
+   else if(/why you broke/.test(t))issues.push('<b>Why + did + you + break</b> 순서로 써.');
+   else issues.push(r[2]);
+ }}
+ if(!cap)issues.push('질문의 첫 글자를 대문자로 써.');
+ if(!qm)issues.push('질문 끝에 <b>?</b>를 붙여.');
+ return{ok:ok&&issues.length===0,issues,frame};
+}
+function danielAnswer(i){
+ const a={
+ height:"I'm 172 cm tall.",glasses:"Yes, I wear glasses. I was wearing them that day, too.",clothes:"I was wearing a black-and-white striped hoodie that day.",
+ when:"It happened yesterday, just after lunch, at about 1:10 p.m.",where:"I was in our classroom after lunch.",
+ admission:"Yes, I broke the window, but I didn't mean to. It was an accident.",
+ whyBreak:"I didn't mean to break it. I was playing with a small ball, and it accidentally hit the window.",
+ howBreak:"I was playing with a small ball in the classroom. The ball slipped away and hit the window.",
+ doing:"I was playing with a small ball for a short time before the next class.",whyThere:"I went back to the classroom after lunch before the next class started.",
+ alone:"I was alone in the classroom at that moment.",ran:"I got scared when the glass broke, so I panicked and ran out of the classroom.",
+ after:"At first, I ran out because I was scared. Later, I told my teacher what happened and apologized.",
+ feeling:"I was scared at first, and now I feel very sorry about what happened.",apology:"Yes. Later, I told my teacher the truth and apologized.",
+ lesson:"I learned that I should never play with a ball in the classroom. I'll be more careful from now on."
+ };return a[i]||"I'm not sure what you mean.";
+}
+
+
+function analyzeStep1Feedback(){
+  const useful=$('useful').value.trim();
+  const less=$('lessUseful').value.trim();
+  const note=$('analysisNote').value.trim();
+
+  if(!useful||!less||!note){
+    return {ok:false,html:'세 항목을 모두 작성한 뒤 피드백을 받아 보세요.'};
+  }
+
+  const u=norm(useful);
+  const l=norm(less);
+  const n=norm(note);
+
+  const feedback=[];
+
+  // ① 유용한 질문
+  const directEvidence = [];
+  if(has(u,['how tall','height','tall','키'])) directEvidence.push('키');
+  if(has(u,['hair','black','brown','머리','머리색'])) directEvidence.push('머리색');
+  if(has(u,['bakery','camila','빵집'])) directEvidence.push('Camila’s Bakery 관련 정보');
+  if(has(u,['where were','where','last saturday','friday','어디','토요일','금요일'])) directEvidence.push('시간·장소/알리바이');
+
+  if(directEvidence.length>=2){
+    feedback.push(`① 좋아. <b>${[...new Set(directEvidence)].join(', ')}</b>처럼 범인 추론에 연결되는 구체적인 정보를 고른 점이 적절해.`);
+  }else if(directEvidence.length===1){
+    feedback.push(`① 네가 고른 질문은 <b>${directEvidence[0]}</b>에 관한 정보를 확인할 수 있어. 두 번째 질문도 범인 추론에 직접 도움이 되는 정보인지 한 번 더 확인해 보면 좋아.`);
+  }else{
+    feedback.push('① 질문을 골랐구나. 그 질문의 답이 <b>범인의 특징, 사건과 관련된 장소, 시간·알리바이</b> 중 무엇을 확인하게 해 주는지 생각해 보면 더 정확하게 분석할 수 있어.');
+  }
+
+  // ② 덜 유용한 질문
+  const possiblyUseful = has(l,['how tall','height','hair','black','brown','bakery','camila','where','last saturday','friday','키','머리','빵집','어디']);
+  const weakContext = has(l,['who did you go','went alone','friend','what did you do after','got home','bed','누구와','친구','집에','잠']);
+
+  if(weakContext && !possiblyUseful){
+    feedback.push('② 이유가 타당해 보여. 이 질문도 상황을 이해하는 데는 도움이 되지만, 범인의 특징이나 핵심 증거와는 비교적 직접적인 연결이 약할 수 있어.');
+  }else if(possiblyUseful){
+    feedback.push('② 이 질문은 실제로 범인의 특징이나 알리바이를 확인하는 데 도움이 될 수도 있어. 왜 “덜 유용하다”고 판단했는지 근거를 한 번 더 생각해 보자.');
+  }else{
+    feedback.push('② 선택 자체보다 <b>왜 이 질문이 범인 추론에 덜 직접적인지</b> 설명할 수 있는지가 중요해. 사건의 핵심 증거와 연결되는지 비교해 보자.');
+  }
+
+  // ③ 좋은 질문의 특징
+  const goodIdeas=[];
+  if(has(n,['구체','specific','자세'])) goodIdeas.push('구체적이어야 한다');
+  if(has(n,['증거','evidence','단서'])) goodIdeas.push('증거·단서와 연결되어야 한다');
+  if(has(n,['추론','범인','criminal','suspect'])) goodIdeas.push('범인 추론에 도움이 되어야 한다');
+  if(has(n,['질문','답','정보','information'])) goodIdeas.push('필요한 정보를 얻을 수 있어야 한다');
+
+  if(goodIdeas.length>=2){
+    feedback.push(`③ 아주 좋아. 좋은 인터뷰 질문의 특징을 <b>${[...new Set(goodIdeas)].join(', ')}</b>는 점으로 잘 정리했어.`);
+  }else if(goodIdeas.length===1){
+    feedback.push(`③ 좋은 출발이야. <b>${goodIdeas[0]}</b>는 점을 잘 잡았어. 여기에 “범인 추론에 실제로 도움이 되는가?”도 생각해 보면 더 좋아.`);
+  }else{
+    feedback.push('③ 좋은 인터뷰 질문은 단순히 궁금한 것을 묻는 질문이 아니라, <b>구체적인 정보를 얻고 범인 추론에 도움이 되는 질문</b>이어야 해. 네 문장을 이 기준과 비교해 보자.');
+  }
+
+  return {
+    ok:true,
+    html:`<b>STEP 1 피드백</b><br><br>${feedback.join('<br><br>')}<br><br><span class="mini">피드백을 읽고 필요하면 답을 고친 뒤, 다음 단계로 넘어가세요.</span>`
+  };
+}
+
+function detectKoreanQuestionIdea(raw){
+  const t=String(raw).trim();
+
+  if(/키|몇\s*cm|몇센티/.test(t)) return 'height';
+  if(/안경/.test(t)) return 'glasses';
+  if(/옷|옷차림|후드|입고/.test(t)) return 'clothes';
+  if(/언제|몇\s*시|시간/.test(t)) return 'when';
+  if(/어디|장소/.test(t)) return 'where';
+
+  if(/왜.*(창문|깨|깼)|창문.*왜/.test(t)) return 'whyBreak';
+  if(/어떻게.*(창문|깨)|창문.*어떻게/.test(t)) return 'howBreak';
+  if(/창문.*(깼|깨뜨)|범인|네가.*했/.test(t)) return 'admission';
+
+  if(/뭐.*하고|무엇.*하고|뭘.*하고|무엇을.*했|뭘.*했/.test(t)) return 'doing';
+  if(/왜.*교실|교실.*왜/.test(t)) return 'whyThere';
+  if(/혼자|누구와|누구랑/.test(t)) return 'alone';
+  if(/왜.*(도망|뛰|달아)|도망.*왜/.test(t)) return 'ran';
+  if(/그\s*후|그다음|그 뒤|나중에.*뭐|이후.*뭐/.test(t)) return 'after';
+
+  if(/기분|느낌|무서|미안/.test(t)) return 'feeling';
+  if(/사과|선생님.*말|사실.*말/.test(t)) return 'apology';
+  if(/배운|교훈|다시는|앞으로/.test(t)) return 'lesson';
+
+  return 'unclear';
+}
+
+function helpScaffold(intent){
+  const map={
+    height:{
+      words:['how tall','be'],
+      frame:'How tall ______ you?',
+      tip:'키를 물을 때는 <b>How tall</b>을 사용해.'
+    },
+    glasses:{
+      words:['do','wear','glasses'],
+      frame:'______ you wear glasses?',
+      tip:'평소 습관을 물을 때는 <b>Do + 주어 + 동사원형</b>을 생각해 봐.'
+    },
+    clothes:{
+      words:['what','be','wearing','that day'],
+      frame:'What ______ you wearing that day?',
+      tip:'그때 입고 있던 옷을 물을 때는 <b>be + wearing</b>을 사용할 수 있어.'
+    },
+    when:{
+      words:['when','did','happen'],
+      frame:'When ______ it happen?',
+      tip:'과거 사건의 시간을 물을 때는 <b>did + 동사원형</b>을 사용해.'
+    },
+    where:{
+      words:['where','be','you','after lunch'],
+      frame:'Where ______ you after lunch?',
+      tip:'과거의 장소를 물을 때는 <b>were</b>를 생각해 봐.'
+    },
+    admission:{
+      words:['did','you','break','window'],
+      frame:'Did you ______ the window?',
+      tip:'과거 행동을 물을 때 <b>Did</b> 뒤에는 동사원형을 써.'
+    },
+    whyBreak:{
+      words:['why','did','you','break','window'],
+      frame:'Why did you ______ the window?',
+      tip:'이유를 물을 때는 <b>Why did you + 동사원형</b>을 사용해.'
+    },
+    howBreak:{
+      words:['how','did','window','break'],
+      frame:'How did the window ______?',
+      tip:'방법을 물을 때는 <b>How did + 주어 + 동사원형</b>을 생각해 봐.'
+    },
+    doing:{
+      words:['what','be','you','doing','after lunch'],
+      frame:'What ______ you doing after lunch?',
+      tip:'그때 하고 있던 행동은 <b>were + doing</b>을 사용할 수 있어.'
+    },
+    whyThere:{
+      words:['why','be','you','in the classroom'],
+      frame:'Why ______ you in the classroom?',
+      tip:'어떤 장소에 있었던 이유를 물을 때는 <b>Why were you ...?</b> 형태를 생각해 봐.'
+    },
+    alone:{
+      words:['be','you','alone'],
+      frame:'______ you alone?',
+      tip:'혼자였는지 물을 때는 <b>Were</b>로 시작할 수 있어.'
+    },
+    ran:{
+      words:['why','did','you','run away'],
+      frame:'Why did you ______ away?',
+      tip:'<b>did</b> 뒤에는 과거형 ran이 아니라 동사원형 <b>run</b>을 써.'
+    },
+    after:{
+      words:['what','did','you','do','after that'],
+      frame:'What did you ______ after that?',
+      tip:'<b>did</b> 뒤에는 동사원형 <b>do</b>를 써.'
+    },
+    feeling:{
+      words:['how','did','you','feel'],
+      frame:'How did you ______?',
+      tip:'감정을 물을 때는 <b>feel</b>을 사용할 수 있어.'
+    },
+    apology:{
+      words:['did','you','apologize'],
+      frame:'Did you ______?',
+      tip:'과거 행동은 <b>Did + 주어 + 동사원형</b>으로 물어볼 수 있어.'
+    },
+    lesson:{
+      words:['what','did','you','learn','from this'],
+      frame:'What did you ______ from this?',
+      tip:'배운 점을 물을 때는 <b>learn</b>을 사용할 수 있어.'
+    }
+  };
+  return map[intent]||null;
+}
+
+function showWritingHelp(i, koreanIdea){
+  const intent=detectKoreanQuestionIdea(koreanIdea);
+  const fb=$(`fb${i}`);
+
+  if(intent==='unclear'){
+    fb.className='feedback';
+    fb.innerHTML=`무엇을 묻고 싶은지 조금 더 구체적으로 적어 줘.<br><br>
+      예: <b>시간 / 장소 / 옷차림 / 당시 행동 / 창문이 깨진 이유 / 도망간 이유 / 기분 / 배운 점</b><br><br>
+      한국어로 다시 적고 Check를 눌러.`;
+    helpState[i]={mode:'waitingKorean',intent:null,level:0};
+    return;
+  }
+
+  const s=helpScaffold(intent);
+  const mixed=[...s.words].sort(()=>Math.random()-.5);
+
+  helpState[i]={mode:'english',intent:intent,level:1};
+
+  fb.className='feedback';
+  fb.innerHTML=`좋아. 먼저 <b>핵심 표현만</b> 줄게.<br><br>
+    ${mixed.map(x=>`<span style="display:inline-block;border:1px solid #aaa;border-radius:7px;padding:3px 6px;margin:2px;background:#fff">${x}</span>`).join(' ')}
+    <br><br>이 표현들을 참고해서 영어 질문을 직접 만들어 보고 Check를 눌러.`;
+}
+
+function progressiveHelpFeedback(i, raw, intent){
+  const fb=$(`fb${i}`);
+  const s=helpScaffold(intent);
+  const state=helpState[i] || {mode:'english',intent:intent,level:0};
+  const g=grammarCheck(intent,raw);
+
+  // 이미 정확하면 성공
+  if(g.ok){
+    fb.className='feedback ok';
+    fb.innerHTML='✓ 자연스럽고 정확한 질문이야.';
+    const evidence=questionEvidenceInfo(intent);
+    questions[i]={q:raw,intent,evidence};
+    fb.innerHTML='✓ 자연스럽고 정확한 질문이야.<br>'+evidence.feedback;
+    helpState[i]={mode:'done',intent,level:0};
+    return true;
+  }
+
+  // Level 1 -> Level 2: 문법 힌트만
+  if(state.level<=1){
+    helpState[i]={mode:'english',intent,level:2};
+    fb.className='feedback';
+    const firstIssue=g.issues[0] || s.tip;
+    fb.innerHTML=`좋은 시도야. 이번에는 <b>힌트 하나만</b> 줄게.<br><br>
+      👉 ${firstIssue}<br><br>
+      질문을 다시 고쳐서 Check를 눌러.`;
+    questions[i]=null;
+    return false;
+  }
+
+  // Level 2 -> Level 3: 문장틀
+  if(state.level===2){
+    helpState[i]={mode:'english',intent,level:3};
+    fb.className='feedback';
+    fb.innerHTML=`아직 조금 어렵구나. 이번에는 <b>문장틀</b>을 줄게.<br><br>
+      <b>${s.frame}</b><br><br>
+      빈칸에 알맞은 말을 넣거나, 문장틀을 참고해서 질문을 완성한 뒤 Check를 눌러.`;
+    questions[i]=null;
+    return false;
+  }
+
+  // Level 3 이후: 틀린 부분만 짧게 다시 지적
+  fb.className='feedback';
+  fb.innerHTML=`거의 다 왔어. 문장틀을 다시 보고 <b>이 부분만</b> 확인해 보자.<br><br>
+    👉 ${(g.issues[0] || s.tip)}<br><br>
+    한 번 더 고쳐서 Check를 눌러.`;
+  questions[i]=null;
+  return false;
+}
+
+
+function questionEvidenceInfo(intent){
+  const physical=['height','glasses','clothes'];
+  const alibi=['when','where','doing','whyThere','alone'];
+  const incident=['admission','whyBreak','howBreak','ran','after'];
+  const followup=['feeling','apology','lesson'];
+
+  if(physical.includes(intent)){
+    return {
+      category:'physical', core:true, leading:false,
+      label:'신체 특징',
+      feedback:'✓ 목격자의 <b>신체 특징 단서</b>와 비교할 수 있는 유효한 질문이야.'
+    };
+  }
+  if(alibi.includes(intent)){
+    return {
+      category:'alibi', core:true, leading:false,
+      label:'시간·장소·알리바이',
+      feedback:'✓ Daniel의 <b>시간·장소·행동</b>을 확인할 수 있어서 범인 추론에 도움이 되는 질문이야.'
+    };
+  }
+  if(incident.includes(intent)){
+    const leading=intent==='admission';
+    return {
+      category:'incident', core:true, leading,
+      label:'사건 행동·경위',
+      feedback: leading
+        ? '△ 직접적으로 범인인지 묻는 질문이야. 물어볼 수는 있지만, <b>이 질문만으로 Daniel을 범인으로 단정하면 안 돼.</b> 다른 사실 확인 질문도 반드시 필요해.'
+        : '✓ <b>사건 당시 행동이나 사건 경위</b>를 확인할 수 있어서 범인 추론에 유효한 질문이야.'
+    };
+  }
+  if(followup.includes(intent)){
+    return {
+      category:'followup', core:false, leading:false,
+      label:'사건 후 반응',
+      feedback:'○ 신문기사의 내용을 풍부하게 하는 좋은 질문이지만, <b>이 질문만으로는 Daniel이 범인인지 판단하기 어려워.</b> 핵심 증거 질문을 추가해야 해.'
+    };
+  }
+  return {
+    category:'other', core:false, leading:false,
+    label:'기타',
+    feedback:'△ 질문의 내용은 이해할 수 있지만, <b>범인 추론에 직접 도움이 되는 증거를 얻을 수 있는지</b> 다시 생각해 보자.'
+  };
+}
+
+function evidenceStats(qs=questions.filter(Boolean)){
+  const core=qs.filter(q=>q.evidence && q.evidence.core);
+  const nonLeading=core.filter(q=>!q.evidence.leading);
+  const categories=[...new Set(core.map(q=>q.evidence.category))];
+  return {
+    total:qs.length,
+    core:core.length,
+    nonLeading:nonLeading.length,
+    categories,
+    physical:core.filter(q=>q.evidence.category==='physical').length,
+    alibi:core.filter(q=>q.evidence.category==='alibi').length,
+    incident:core.filter(q=>q.evidence.category==='incident').length,
+    followup:qs.filter(q=>q.evidence && q.evidence.category==='followup').length
+  };
+}
+
+function evidenceSufficient(qs=questions.filter(Boolean)){
+  const s=evidenceStats(qs);
+  return s.total>=4 &&
+         s.core>=3 &&
+         s.nonLeading>=2 &&
+         s.categories.length>=2;
+}
+
+function evidenceNeedsText(qs=questions.filter(Boolean)){
+  const s=evidenceStats(qs), needs=[];
+
+  if(s.core<3){
+    needs.push(`범인 추론에 직접 도움이 되는 <b>핵심 질문이 ${s.core}개</b>야. 최소 3개 정도는 필요해.`);
+  }
+  if(s.categories.length<2){
+    needs.push('한 종류의 단서에만 치우쳐 있어. <b>신체 특징 / 시간·장소·알리바이 / 사건 행동·경위</b> 중 다른 영역의 질문도 추가해 보자.');
+  }
+  if(s.nonLeading<2){
+    needs.push('“네가 범인이야?”처럼 답을 유도하는 질문 말고, <b>범인이라고 전제하지 않고 사실을 확인하는 질문</b>을 2개 이상 포함해 보자.');
+  }
+
+  return {
+    stats:s,
+    needs,
+    enough:evidenceSufficient(qs)
+  };
+}
+
+function questionQualityHtml(qs=questions.filter(Boolean)){
+  const r=evidenceNeedsText(qs),s=r.stats;
+  const cats=[];
+  if(s.physical) cats.push(`신체 특징 ${s.physical}`);
+  if(s.alibi) cats.push(`시간·장소·알리바이 ${s.alibi}`);
+  if(s.incident) cats.push(`사건 행동·경위 ${s.incident}`);
+
+  return `<b>질문 구성 점검</b><br>
+    전체 질문: ${s.total}개 / 핵심 증거 질문: ${s.core}개<br>
+    확인 영역: ${cats.length?cats.join(' · '):'아직 없음'}<br><br>
+    ${r.enough
+      ? '✓ 인터뷰를 시작할 수 있어. 다만 실제 답변을 들은 뒤에도 <b>근거가 충분한지 다시 확인</b>해야 해.'
+      : '△ 인터뷰를 시작할 수는 있지만, 현재 질문만으로는 범인을 판단하기에 근거가 부족할 수 있어.<br>• '+r.needs.join('<br>• ')}`;
+}
+function renderQuestionCards(){
+ const box=$('questionCards');box.innerHTML='';
+ for(let i=0;i<questionCount;i++){
+   const existing=questions[i]&&questions[i].q?questions[i].q:'';
+   const card=document.createElement('div');card.className='questionCard';
+   card.innerHTML=`<b>Q${i+1}</b><div class="questionRow">
+     <input id="q${i}" value="${esc(existing)}" placeholder="Write your own interview question. (도움이 필요하면: 도움)">
+     <button onclick="checkQuestion(${i})">Check</button>
+   </div><div id="fb${i}"></div>`;
+   box.appendChild(card);
+
+   if(questions[i]){
+     const fb=$(`fb${i}`);
+     fb.className='feedback ok';
+     fb.innerHTML=`✓ 자연스럽고 정확한 질문이야.<br>${questions[i].evidence.feedback}`;
+   }
+ }
+ updateStep2();
+}
+function checkQuestion(i){
+ const raw=$(`q${i}`).value.trim();
+ const fb=$(`fb${i}`);
+
+ if(!raw){
+   fb.className='feedback';
+   fb.innerHTML='질문을 먼저 작성해 주세요. 영어로 쓰기 어렵다면 <b>도움</b>이라고 입력해도 돼.';
+   return;
+ }
+
+ // 1. Student asks for help
+ if(raw==='도움'){
+   helpState[i]={mode:'waitingKorean',intent:null,level:0};
+   questions[i]=null;
+   fb.className='feedback';
+   fb.innerHTML=`좋아. 먼저 <b>Daniel에게 무엇을 묻고 싶은지 한국어로</b> 적어 줘.<br><br>
+     예를 들어 “언제 일어났는지 묻고 싶어”, “왜 도망갔는지 묻고 싶어”처럼 쓰면 돼.<br><br>
+     같은 입력칸에 한국어로 적고 다시 Check를 눌러.`;
+   updateStep2();
+   return;
+ }
+
+ // 2. After '도움', Korean idea -> only core expressions
+ if(helpState[i] && helpState[i].mode==='waitingKorean'){
+   showWritingHelp(i,raw);
+   questions[i]=null;
+   updateStep2();
+   return;
+ }
+
+ // 3. Progressive scaffold mode
+ if(helpState[i] && helpState[i].mode==='english' && helpState[i].intent){
+   const intent=helpState[i].intent;
+   progressiveHelpFeedback(i,raw,intent);
+   updateStep2();
+   return;
+ }
+
+ // 4. Normal independent writing mode
+ const intent=analyzeIntent(raw);
+ const g=grammarCheck(intent,raw);
+
+ if(!g.ok){
+   fb.className='feedback';
+   // 학생이 도움 없이 직접 쓴 경우도 한 번에 과도한 힌트를 주지 않음
+   const firstIssue=g.issues[0] || '질문의 어순을 다시 확인해 보자.';
+   fb.innerHTML=`뜻은 확인했어. <b>한 가지 힌트만</b> 줄게.<br><br>
+     👉 ${firstIssue}<br><br>
+     고친 뒤 다시 Check를 눌러.<br><br>
+     더 도움이 필요하면 입력칸에 <b>도움</b>이라고 써도 돼.`;
+   questions[i]=null;
+ }else{
+   fb.className='feedback ok';
+   fb.innerHTML='✓ 자연스럽고 정확한 질문이야.';
+   const evidence=questionEvidenceInfo(intent);
+   questions[i]={q:raw,intent,evidence};
+   fb.innerHTML='✓ 자연스럽고 정확한 질문이야.<br>'+evidence.feedback;
+   helpState[i]={mode:'done',intent,level:0};
+ }
+ updateStep2();
+}
+
+function updateStep2(){
+ const valid=questions.filter(Boolean).length;
+ $('toStep3').disabled=valid<4;
+
+ const q=$('questionQuality');
+ if(valid>0){
+   q.style.display='block';
+   q.innerHTML=questionQualityHtml();
+ }else{
+   q.style.display='none';
+ }
+}
+
+function prepareInterview(){
+ const qs=questions.filter(Boolean);
+ questions=qs;
+ questionCount=qs.length;
+
+ answers=qs.map(x=>interviewMemory[x.q]||null);
+
+ $('step2').style.display='none';
+ $('step3').style.display='flex';
+ setStep(3,'Daniel Interview');
+
+ const p=$('preparedQuestions');
+ p.innerHTML='';
+
+ qs.forEach((x,i)=>{
+   const d=document.createElement('div');
+   d.className='qaItem';
+   const oldAnswer=answers[i];
+
+   d.innerHTML=`<b>Q${i+1}. ${esc(x.q)}</b><br>
+     <span class="mini">${x.evidence.feedback}</span><br>
+     <button id="ask${i}" style="margin-top:6px" onclick="askPrepared(${i})" ${oldAnswer?'disabled':''}>${oldAnswer?'Interviewed':'Ask Daniel'}</button>
+     <div id="ans${i}" class="note">${oldAnswer?'<b>Daniel:</b> '+esc(oldAnswer):''}</div>`;
+   p.appendChild(d);
+ });
+
+ $('evidenceAudit').style.display='none';
+ $('supplementBtn').style.display='none';
+ $('articleBtn').style.display='none';
+ $('toStep4').style.display='inline-block';
+
+ const done=answers.filter(Boolean).length;
+ $('interviewStatus').textContent=`인터뷰 ${done} / ${questions.length} 완료`;
+ $('toStep4').disabled=done!==questions.length;
+
+ if(done===0){
+   addMsg("Daniel: Hi. I'm Daniel. Ask me the questions you prepared.");
+ }else{
+   addMsg("Reporter: 기존 인터뷰 기록은 그대로 유지했어. 새로 추가한 질문만 Daniel에게 물어보면 돼.");
+ }
+}
+
+function askPrepared(i){
+ if(answers[i])return;
+
+ const x=questions[i];
+ addMsg(x.q,'user');
+
+ const a=danielAnswer(x.intent);
+ addMsg("Daniel: "+a);
+
+ answers[i]=a;
+ interviewMemory[x.q]=a;
+
+ $(`ans${i}`).innerHTML=`<b>Daniel:</b> ${esc(a)}`;
+ $(`ask${i}`).disabled=true;
+ $(`ask${i}`).textContent='Interviewed';
+
+ const done=answers.filter(Boolean).length;
+ $('interviewStatus').textContent=`인터뷰 ${done} / ${questions.length} 완료`;
+
+ if(done===questions.length){
+   $('toStep4').disabled=false;
+   $('toStep4').textContent='인터뷰 근거 확인하기';
+ }
+}
+
+function auditInterviewEvidence(){
+ const r=evidenceNeedsText();
+ const box=$('evidenceAudit');
+ box.style.display='block';
+
+ if(r.enough){
+   box.innerHTML=`<b>인터뷰 근거 점검</b><br><br>
+     ✓ 범인 추론에 직접 도움이 되는 질문이 ${r.stats.core}개 있어.<br>
+     ✓ 서로 다른 ${r.stats.categories.length}개 영역의 단서를 확인했어.<br>
+     ✓ 범인을 미리 단정하지 않고 사실을 확인하는 질문도 충분해.<br><br>
+     <b>이제 Daniel의 답변을 근거로 신문기사를 작성할 수 있어.</b>`;
+   $('supplementBtn').style.display='none';
+   $('articleBtn').style.display='inline-block';
+   $('toStep4').style.display='none';
+ }else{
+   box.innerHTML=`<b>인터뷰 근거가 아직 충분하지 않아.</b><br><br>
+     질문을 했다는 것만으로 Daniel을 범인이라고 단정할 수는 없어.<br><br>
+     • ${r.needs.join('<br>• ')}<br><br>
+     <b>질문을 보충한 뒤 Daniel에게 추가 인터뷰를 해 보자.</b>`;
+   $('supplementBtn').style.display='inline-block';
+   $('articleBtn').style.display='none';
+ }
+}
+
+function supplementQuestions(){
+ $('step3').style.display='none';
+ $('step2').style.display='block';
+ setStep(2,'Write Questions');
+
+ questions.push(null);
+ questionCount=questions.length;
+ renderQuestionCards();
+
+ const q=$('questionQuality');
+ q.style.display='block';
+ q.innerHTML=`<b>추가 질문이 필요해.</b><br>
+   기존 질문과 다른 종류의 사실을 확인할 수 있는 질문을 만들어 보자.<br><br>
+   ${questionQualityHtml()}`;
+
+ window.scrollTo(0,0);
+}
+
+function showArticle(){
+ $('step3').style.display='none';$('step4').style.display='block';setStep(4,'Newspaper Writing');
+ const n=$('interviewNotes');n.innerHTML='';questions.forEach((x,i)=>{const d=document.createElement('div');d.className='qaItem';d.innerHTML=`<b>Q${i+1}. ${esc(x.q)}</b><br>Daniel: ${esc(answers[i])}`;n.appendChild(d);});
+}
+function articleCheck(){
+ const a=$('article').value.trim(),issues=[],good=[];
+ [['sumWhat','What happened?'],['sumWhen','When did it happen?'],['sumWhere','Where did it happen?'],['sumOther','Other Information']].forEach(([id,label])=>$(id).value.trim()?good.push(label+' 작성'):issues.push(label+'를 작성해 보세요.'));
+ $('headline').value.trim()?good.push('Headline 작성'):issues.push('Headline을 작성해 보세요.');
+ a.split(/[.!?]+/).filter(x=>x.trim()).length>=5?good.push('기사 5문장 이상'):issues.push('Main Article을 최소 5문장 정도로 작성해 보세요.');
+ const t=norm(a);has(t,['daniel'])?good.push('Daniel 인터뷰 내용 활용'):issues.push('기사에 Daniel과의 인터뷰 내용을 넣어 보세요.');
+ has(t,['window'])?good.push('사건 핵심 포함'):issues.push('창문 사건이 드러나도록 해 보세요.');
+ $('articleFeedback').style.display='block';$('articleFeedback').innerHTML=`<b>잘 된 점</b><br>${good.length?'✓ '+good.join('<br>✓ '):'-'}<br><br><b>확인할 점</b><br>${issues.length?'• '+issues.join('<br>• '):'내용 요소가 잘 갖추어졌어요.'}<br><br><span class="mini">챗봇이 기사를 대신 고쳐 쓰지는 않습니다.</span>`;
+}
+function makeFinal(){
+ if(!$('headline').value.trim()||!$('article').value.trim()){articleCheck();return;}
+ $('step4').style.display='none';$('finalScreen').style.display='block';
+ $('paperHeadline').textContent=$('headline').value.trim();$('paperArticle').textContent=$('article').value.trim();
+ $('pWhat').textContent=$('sumWhat').value.trim();$('pWhen').textContent=$('sumWhen').value.trim();$('pWhere').textContent=$('sumWhere').value.trim();$('pOther').textContent=$('sumOther').value.trim();
+ $('pInterview').innerHTML=questions.map((x,i)=>`Q: ${esc(x.q)}<br>A: ${esc(answers[i])}`).join('<br><br>');
+ window.scrollTo(0,0);
+}
+$('toStep2').onclick=()=>{
+  const result=analyzeStep1Feedback();
+  $('step1Feedback').style.display='block';
+  $('step1Feedback').innerHTML=result.html;
+  $('proceedStep2').style.display=result.ok?'inline-block':'none';
+};
+$('proceedStep2').onclick=()=>{
+  $('step1').style.display='none';
+  $('step2').style.display='block';
+  setStep(2,'Write Questions');
+  renderQuestionCards();
+};
+$('addQuestion').onclick=()=>{questionCount++;renderQuestionCards();questions=[];$('toStep3').disabled=true;};
+$('toStep3').onclick=prepareInterview;$('toStep4').onclick=auditInterviewEvidence;$('supplementBtn').onclick=supplementQuestions;$('articleBtn').onclick=showArticle;$('checkArticle').onclick=articleCheck;$('makeFinal').onclick=makeFinal;
+$('captureBtn').onclick=()=>{document.body.classList.add('capture');$('captureBtn').textContent='일반 화면으로 돌아가기';$('captureBtn').onclick=()=>location.reload();};
+$('backBtn').onclick=()=>{$('finalScreen').style.display='none';$('step4').style.display='block';window.scrollTo(0,0);};
+</script>
+</body></html>
