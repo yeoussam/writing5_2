@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Interview & Newspaper Writing</title>
+<title>Daniel Interview & Newspaper Helper v10</title>
 <style>
 :root{--bg:#f4f5f6;--card:#fff;--ink:#202428;--muted:#66707a;--line:#d8dde2;--dark:#30353a;--soft:#eef1f3;--paper:#fffdf8}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;line-height:1.55}
@@ -34,7 +34,7 @@ button{border:0;border-radius:9px;background:var(--dark);color:#fff;padding:10px
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>Daniel Interview & Newspaper Helper</h1><p>Lesson 5 · Interview → Newspaper</p></div><div class="badge">Analyze → Ask → Interview → Report</div></header>
+<header><div><h1>Daniel Interview & Newspaper Helper</h1><p>Lesson 5 · Interview → Newspaper</p></div><div style="display:flex;gap:8px;align-items:center"><div class="badge">Analyze → Ask → Interview → Report</div><button id="resetAll" class="secondary" style="padding:7px 10px">처음부터</button></div></header>
 <div class="grid">
 <aside class="card side">
 <h2>CASE FILE</h2>
@@ -98,22 +98,29 @@ button{border:0;border-radius:9px;background:var(--dark);color:#fff;padding:10px
 
 <section id="step4" class="stage" style="display:none">
 <h2>STEP 4. 신문기사 작성하기</h2>
-<div class="guide"><b>기사 구성 가이드</b><ol><li><b>Summary:</b> 사건의 What / When / Where / Other Information</li><li><b>Main Article:</b> 사건 상황 + Daniel과의 인터뷰에서 알게 된 내용</li><li><b>Ending:</b> 사건 후 행동, 감정, 배운 점 중 필요한 내용을 선택</li></ol>인터뷰 내용을 그대로 복사하기보다 기사 문장으로 다시 정리해 보세요.</div>
+<div class="guide"><b>신문기사 구성 가이드</b>
+    <ol>
+      <li><b>Headline:</b> 사건의 핵심이 드러나는 짧은 제목</li>
+      <li><b>Lead:</b> 첫 1~2문장에서 <b>무슨 일이 / 언제 / 어디에서</b> 일어났는지 알립니다.</li>
+      <li><b>Body:</b> Daniel과의 인터뷰에서 확인한 내용을 기사 문장으로 정리합니다. <b>Daniel said ... / In the interview, Daniel said ...</b> 같은 표현을 활용할 수 있습니다.</li>
+      <li><b>Ending:</b> 사건 후 Daniel의 행동, 감정, 사과, 배운 점 등으로 마무리합니다.</li>
+    </ol>
+    지난 차시의 용의자 소거 글을 그대로 옮기는 것이 아니라, <b>독자에게 사건과 인터뷰 결과를 알려 주는 신문기사</b>로 작성하세요.</div>
 
 <h3>Interview Notes</h3><div id="interviewNotes" class="qaList"></div>
 
 <h3>Summary of the Case</h3>
 <div class="summaryGrid">
-<div class="field"><label>What happened?</label><input id="sumWhat"></div>
-<div class="field"><label>When did it happen?</label><input id="sumWhen"></div>
-<div class="field"><label>Where did it happen?</label><input id="sumWhere"></div>
-<div class="field"><label>Other Information</label><input id="sumOther"></div>
+<div class="field"><label>What happened?</label><input id="sumWhat" spellcheck="true"></div>
+<div class="field"><label>When did it happen?</label><input id="sumWhen" spellcheck="true"></div>
+<div class="field"><label>Where did it happen?</label><input id="sumWhere" spellcheck="true"></div>
+<div class="field"><label>Other Information</label><input id="sumOther" spellcheck="true"></div>
 </div>
-<div class="field"><label>Headline</label><input id="headline" placeholder="Write your own headline."></div>
-<div class="field"><label>Main Article</label><textarea id="article" style="min-height:220px" placeholder="Write your newspaper article in English."></textarea></div>
+<div class="field"><label>Headline</label><input id="headline" spellcheck="true" placeholder="Write your own headline."></div>
+<div class="field"><label>Main Article</label><textarea id="article" spellcheck="true" style="min-height:220px" placeholder="Write your newspaper article in English."></textarea></div>
 <button id="checkArticle">기사 점검하기</button>
 <div id="articleFeedback" class="feedback" style="display:none"></div>
-<div style="margin-top:10px"><button id="makeFinal" class="secondary">Final Newspaper 만들기</button></div>
+<div style="margin-top:10px"><button id="makeFinal" class="secondary" disabled>기사 점검 후 Final Newspaper 만들기</button></div>
 </section>
 
 <section id="finalScreen" style="display:none">
@@ -126,10 +133,292 @@ button{border:0;border-radius:9px;background:var(--dark);color:#fff;padding:10px
 
 <script>
 const $=id=>document.getElementById(id);
-let questions=[],answers=[],questionCount=4,helpState={},interviewMemory={};
+let questions=[],answers=[],questionCount=4,helpState={},interviewMemory={},articleApproved=false,approvedArticleSignature='';
+const SAVE_KEY='daniel_interview_newspaper_helper_v10_progress';
+let restoringProgress=false;
 const chat=$('chat');
 
-function setStep(n,label){$('phase').textContent=`STEP ${n} · ${label}`;$('num').textContent=`${n} / 4`;$('bar').style.width=`${n*25}%`;}
+
+function fieldValue(id){
+  const el=$(id); return el ? el.value : '';
+}
+function setFieldValue(id,value){
+  const el=$(id); if(el) el.value=value||'';
+}
+function currentVisibleStep(){
+  if($('finalScreen') && $('finalScreen').style.display!=='none') return 'final';
+  if($('step4') && $('step4').style.display!=='none') return 'step4';
+  if($('step3') && $('step3').style.display!=='none') return 'step3';
+  if($('step2') && $('step2').style.display!=='none') return 'step2';
+  return 'step1';
+}
+function saveProgress(){
+  if(restoringProgress) return;
+  try{
+    const questionInputs=[];
+    for(let i=0;i<questionCount;i++){
+      const el=$(`q${i}`);
+      questionInputs.push(el?el.value:'');
+    }
+
+    const state={
+      version:10,
+      visibleStep:currentVisibleStep(),
+      questionCount,
+      questions,
+      answers,
+      helpState,
+      interviewMemory,
+
+      useful:fieldValue('useful'),
+      lessUseful:fieldValue('lessUseful'),
+      analysisNote:fieldValue('analysisNote'),
+      step1FeedbackHTML:$('step1Feedback')?$('step1Feedback').innerHTML:'',
+      step1FeedbackDisplay:$('step1Feedback')?$('step1Feedback').style.display:'none',
+      proceedDisplay:$('proceedStep2')?$('proceedStep2').style.display:'none',
+
+      questionInputs,
+      questionQualityHTML:$('questionQuality')?$('questionQuality').innerHTML:'',
+      questionQualityDisplay:$('questionQuality')?$('questionQuality').style.display:'none',
+
+      chatHTML:chat?chat.innerHTML:'',
+      interviewStatus:$('interviewStatus')?$('interviewStatus').textContent:'',
+      evidenceAuditHTML:$('evidenceAudit')?$('evidenceAudit').innerHTML:'',
+      evidenceAuditDisplay:$('evidenceAudit')?$('evidenceAudit').style.display:'none',
+      supplementDisplay:$('supplementBtn')?$('supplementBtn').style.display:'none',
+      articleBtnDisplay:$('articleBtn')?$('articleBtn').style.display:'none',
+      toStep4Display:$('toStep4')?$('toStep4').style.display:'inline-block',
+      toStep4Disabled:$('toStep4')?$('toStep4').disabled:true,
+
+      sumWhat:fieldValue('sumWhat'),
+      sumWhen:fieldValue('sumWhen'),
+      sumWhere:fieldValue('sumWhere'),
+      sumOther:fieldValue('sumOther'),
+      headline:fieldValue('headline'),
+      article:fieldValue('article'),
+      articleFeedbackHTML:$('articleFeedback')?$('articleFeedback').innerHTML:'',
+      articleFeedbackDisplay:$('articleFeedback')?$('articleFeedback').style.display:'none',
+      articleApproved,
+      approvedArticleSignature,
+
+      classNo:fieldValue('classNo'),
+      studentNo:fieldValue('studentNo'),
+      studentName:fieldValue('studentName')
+    };
+
+    localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+  }catch(e){}
+}
+function clearSavedProgress(){
+  try{localStorage.removeItem(SAVE_KEY);}catch(e){}
+}
+function bindAutosaveFields(){
+  const ids=[
+    'useful','lessUseful','analysisNote',
+    'sumWhat','sumWhen','sumWhere','sumOther',
+    'headline','article','classNo','studentNo','studentName'
+  ];
+  ids.forEach(id=>{
+    const el=$(id);
+    if(el && !el.dataset.autosaveBound){
+      el.addEventListener('input',()=>{
+        if(['sumWhat','sumWhen','sumWhere','sumOther','headline','article'].includes(id)) invalidateArticleApproval();
+        saveProgress();
+      });
+      el.addEventListener('change',()=>{
+        if(['sumWhat','sumWhen','sumWhere','sumOther','headline','article'].includes(id)) invalidateArticleApproval();
+        saveProgress();
+      });
+      el.dataset.autosaveBound='1';
+    }
+  });
+
+  for(let i=0;i<questionCount;i++){
+    const el=$(`q${i}`);
+    if(el && !el.dataset.autosaveBound){
+      el.addEventListener('input',saveProgress);
+      el.addEventListener('change',saveProgress);
+      el.dataset.autosaveBound='1';
+    }
+  }
+}
+function restoreQuestionCards(saved){
+  questionCount=saved.questionCount||4;
+  renderQuestionCards();
+
+  const vals=Array.isArray(saved.questionInputs)?saved.questionInputs:[];
+  for(let i=0;i<questionCount;i++){
+    const el=$(`q${i}`);
+    if(el && vals[i]!==undefined) el.value=vals[i]||'';
+  }
+
+  // Restore feedback for questions already checked
+  for(let i=0;i<questionCount;i++){
+    const fb=$(`fb${i}`);
+    if(!fb) continue;
+    if(questions[i]){
+      fb.className='feedback ok';
+      fb.innerHTML=`✓ 자연스럽고 정확한 질문이야.<br>${questions[i].evidence?questions[i].evidence.feedback:''}`;
+    }else if(helpState[i] && helpState[i].mode==='waitingKorean'){
+      fb.className='feedback';
+      fb.innerHTML=`좋아. 먼저 <b>Daniel에게 무엇을 묻고 싶은지 한국어로</b> 적어 줘.<br><br>
+        같은 입력칸에 한국어로 적고 다시 Check를 눌러.`;
+    }else if(helpState[i] && helpState[i].mode==='english' && helpState[i].intent){
+      const s=helpScaffold(helpState[i].intent);
+      if(helpState[i].level===1){
+        const mixed=[...s.words];
+        fb.className='feedback';
+        fb.innerHTML=`이전에 받은 <b>핵심 표현</b>부터 다시 이어갈게.<br><br>
+          ${mixed.map(x=>`<span style="display:inline-block;border:1px solid #aaa;border-radius:7px;padding:3px 6px;margin:2px;background:#fff">${x}</span>`).join(' ')}
+          <br><br>영어 질문을 직접 만들어 보고 Check를 눌러.`;
+      }else if(helpState[i].level===2){
+        fb.className='feedback';
+        fb.innerHTML=`이전에 받던 도움 단계부터 이어갈게.<br><br><b>힌트:</b> ${s.tip}<br><br>질문을 다시 써 보고 Check를 눌러.`;
+      }else{
+        fb.className='feedback';
+        fb.innerHTML=`이전에 받던 도움 단계부터 이어갈게.<br><br><b>문장틀:</b> ${s.frame}<br><br>질문을 완성한 뒤 Check를 눌러.`;
+      }
+    }
+  }
+  updateStep2();
+  bindAutosaveFields();
+}
+function restoreInterview(saved){
+  const qs=questions.filter(Boolean);
+  questionCount=qs.length;
+  answers=Array.isArray(saved.answers)?saved.answers:new Array(qs.length).fill(null);
+
+  const p=$('preparedQuestions');
+  p.innerHTML='';
+
+  qs.forEach((x,i)=>{
+    const d=document.createElement('div');
+    d.className='qaItem';
+    const oldAnswer=answers[i];
+    d.innerHTML=`<b>Q${i+1}. ${esc(x.q)}</b><br>
+      <span class="mini">${x.evidence?x.evidence.feedback:''}</span><br>
+      <button id="ask${i}" style="margin-top:6px" onclick="askPrepared(${i})" ${oldAnswer?'disabled':''}>${oldAnswer?'Interviewed':'Ask Daniel'}</button>
+      <div id="ans${i}" class="note">${oldAnswer?'<b>Daniel:</b> '+esc(oldAnswer):''}</div>`;
+    p.appendChild(d);
+  });
+
+  chat.innerHTML=saved.chatHTML||'';
+
+  const done=answers.filter(Boolean).length;
+  $('interviewStatus').textContent=saved.interviewStatus||`인터뷰 ${done} / ${questions.length} 완료`;
+  $('toStep4').disabled=saved.toStep4Disabled!==undefined?saved.toStep4Disabled:(done!==questions.length);
+  $('toStep4').style.display=saved.toStep4Display||'inline-block';
+  $('evidenceAudit').innerHTML=saved.evidenceAuditHTML||'';
+  $('evidenceAudit').style.display=saved.evidenceAuditDisplay||'none';
+  $('supplementBtn').style.display=saved.supplementDisplay||'none';
+  $('articleBtn').style.display=saved.articleBtnDisplay||'none';
+}
+function restoreArticle(saved){
+  const n=$('interviewNotes'); n.innerHTML='';
+  questions.filter(Boolean).forEach((x,i)=>{
+    const d=document.createElement('div');
+    d.className='qaItem';
+    d.innerHTML=`<b>Q${i+1}. ${esc(x.q)}</b><br>Daniel: ${esc(answers[i]||'')}`;
+    n.appendChild(d);
+  });
+
+  setFieldValue('sumWhat',saved.sumWhat);
+  setFieldValue('sumWhen',saved.sumWhen);
+  setFieldValue('sumWhere',saved.sumWhere);
+  setFieldValue('sumOther',saved.sumOther);
+  setFieldValue('headline',saved.headline);
+  setFieldValue('article',saved.article);
+
+  $('articleFeedback').innerHTML=saved.articleFeedbackHTML||'';
+  $('articleFeedback').style.display=saved.articleFeedbackDisplay||'none';
+  $('makeFinal').disabled=!articleApproved || approvedArticleSignature!==currentArticleSignature();
+  $('makeFinal').textContent=$('makeFinal').disabled?'기사 점검 후 Final Newspaper 만들기':'Final Newspaper 만들기';
+  bindAutosaveFields();
+}
+function restoreFinal(saved){
+  setFieldValue('classNo',saved.classNo);
+  setFieldValue('studentNo',saved.studentNo);
+  setFieldValue('studentName',saved.studentName);
+
+  $('paperHeadline').textContent=saved.headline||'';
+  $('paperArticle').textContent=saved.article||'';
+  $('pWhat').textContent=saved.sumWhat||'';
+  $('pWhen').textContent=saved.sumWhen||'';
+  $('pWhere').textContent=saved.sumWhere||'';
+  $('pOther').textContent=saved.sumOther||'';
+
+  $('pInterview').innerHTML=questions.filter(Boolean).map((x,i)=>
+    `Q: ${esc(x.q)}<br>A: ${esc((answers||[])[i]||'')}`
+  ).join('<br><br>');
+
+  bindAutosaveFields();
+}
+function showOnly(stepId){
+  ['step1','step2','step3','step4','finalScreen'].forEach(id=>{
+    const el=$(id);
+    if(!el) return;
+    if(id==='step3') el.style.display=(id===stepId)?'flex':'none';
+    else el.style.display=(id===stepId)?'block':'none';
+  });
+}
+function restoreProgress(){
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');}catch(e){saved=null;}
+  if(!saved || saved.version!==10) return false;
+
+  restoringProgress=true;
+
+  questions=Array.isArray(saved.questions)?saved.questions:[];
+  answers=Array.isArray(saved.answers)?saved.answers:[];
+  questionCount=saved.questionCount||4;
+  helpState=saved.helpState||{};
+  interviewMemory=saved.interviewMemory||{};
+  articleApproved=!!saved.articleApproved;
+  approvedArticleSignature=saved.approvedArticleSignature||'';
+
+  setFieldValue('useful',saved.useful);
+  setFieldValue('lessUseful',saved.lessUseful);
+  setFieldValue('analysisNote',saved.analysisNote);
+
+  if($('step1Feedback')){
+    $('step1Feedback').innerHTML=saved.step1FeedbackHTML||'';
+    $('step1Feedback').style.display=saved.step1FeedbackDisplay||'none';
+  }
+  if($('proceedStep2')) $('proceedStep2').style.display=saved.proceedDisplay||'none';
+
+  const step=saved.visibleStep||'step1';
+
+  if(step==='step1'){
+    showOnly('step1');
+    setStep(1,'Example Interview');
+  }else if(step==='step2'){
+    showOnly('step2');
+    setStep(2,'Write Questions');
+    restoreQuestionCards(saved);
+    if($('questionQuality')){
+      $('questionQuality').innerHTML=saved.questionQualityHTML||$('questionQuality').innerHTML;
+      $('questionQuality').style.display=saved.questionQualityDisplay||$('questionQuality').style.display;
+    }
+  }else if(step==='step3'){
+    showOnly('step3');
+    setStep(3,'Daniel Interview');
+    restoreInterview(saved);
+  }else if(step==='step4'){
+    showOnly('step4');
+    setStep(4,'Newspaper Writing');
+    restoreArticle(saved);
+  }else if(step==='final'){
+    showOnly('finalScreen');
+    setStep(4,'Final Newspaper');
+    restoreFinal(saved);
+  }
+
+  bindAutosaveFields();
+  restoringProgress=false;
+  saveProgress();
+  return true;
+}
+function setStep(n,label){$('phase').textContent=`STEP ${n} · ${label}`;$('num').textContent=`${n} / 4`;$('bar').style.width=`${n*25}%`;saveProgress();}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 function addMsg(text,who='bot',html=false){const r=document.createElement('div');r.className='msg '+who;const b=document.createElement('div');b.className='bubble';html?b.innerHTML=text:b.textContent=text;r.appendChild(b);chat.appendChild(r);chat.scrollTop=chat.scrollHeight;}
 function norm(s){return s.toLowerCase().replace(/[’‘]/g,"'").replace(/[.,!?;:'"]/g,' ').replace(/\s+/g,' ').trim();}
@@ -577,6 +866,8 @@ function renderQuestionCards(){
    }
  }
  updateStep2();
+ bindAutosaveFields();
+ saveProgress();
 }
 function checkQuestion(i){
  const raw=$(`q${i}`).value.trim();
@@ -638,6 +929,7 @@ function checkQuestion(i){
    helpState[i]={mode:'done',intent,level:0};
  }
  updateStep2();
+ saveProgress();
 }
 
 function updateStep2(){
@@ -651,6 +943,7 @@ function updateStep2(){
  }else{
    q.style.display='none';
  }
+ saveProgress();
 }
 
 function prepareInterview(){
@@ -693,6 +986,7 @@ function prepareInterview(){
  }else{
    addMsg("Reporter: 기존 인터뷰 기록은 그대로 유지했어. 새로 추가한 질문만 Daniel에게 물어보면 돼.");
  }
+ saveProgress();
 }
 
 function askPrepared(i){
@@ -718,6 +1012,7 @@ function askPrepared(i){
    $('toStep4').disabled=false;
    $('toStep4').textContent='인터뷰 근거 확인하기';
  }
+ saveProgress();
 }
 
 function auditInterviewEvidence(){
@@ -742,6 +1037,7 @@ function auditInterviewEvidence(){
    $('supplementBtn').style.display='inline-block';
    $('articleBtn').style.display='none';
  }
+ saveProgress();
 }
 
 function supplementQuestions(){
@@ -760,44 +1056,371 @@ function supplementQuestions(){
    ${questionQualityHtml()}`;
 
  window.scrollTo(0,0);
+ saveProgress();
 }
 
 function showArticle(){
  $('step3').style.display='none';$('step4').style.display='block';setStep(4,'Newspaper Writing');
  const n=$('interviewNotes');n.innerHTML='';questions.forEach((x,i)=>{const d=document.createElement('div');d.className='qaItem';d.innerHTML=`<b>Q${i+1}. ${esc(x.q)}</b><br>Daniel: ${esc(answers[i])}`;n.appendChild(d);});
+ bindAutosaveFields();saveProgress();
 }
+
+function currentArticleSignature(){
+  return [
+    fieldValue('sumWhat'),fieldValue('sumWhen'),fieldValue('sumWhere'),fieldValue('sumOther'),
+    fieldValue('headline'),fieldValue('article')
+  ].join('||');
+}
+
+function invalidateArticleApproval(){
+  articleApproved=false;
+  approvedArticleSignature='';
+  const btn=$('makeFinal');
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='기사 점검 후 Final Newspaper 만들기';
+  }
+}
+
+function articleSentenceCount(text){
+  return String(text).split(/[.!?]+/).map(x=>x.trim()).filter(Boolean).length;
+}
+
+function countInterviewFacts(text){
+  const t=norm(text);
+  let count=0;
+
+  // Count distinct facts that Daniel can reveal in the interview.
+  if(has(t,['172 cm','172cm'])) count++;
+  if(has(t,['wear glasses','wearing glasses','wore glasses'])) count++;
+  if(has(t,['striped hoodie','black and white striped','black-and-white striped'])) count++;
+  if(has(t,['1 10','1:10'])) count++;
+  if(has(t,['alone in the classroom','was alone','alone at that moment'])) count++;
+  if(has(t,['small ball','ball slipped','ball hit','playing with a ball'])) count++;
+  if(has(t,['accident','accidentally','did not mean','didn t mean'])) count++;
+  if(has(t,['scared','panicked','ran out','ran away'])) count++;
+  if(has(t,['told my teacher','told the teacher','told his teacher','apologized','apologised','sorry'])) count++;
+  if(has(t,['more careful','never play with a ball','learned','learnt'])) count++;
+
+  return count;
+}
+
+
+function articleMechanicalIssues(text,label='글'){
+  const issues=[];
+  const raw=String(text||'');
+  const low=raw.toLowerCase().replace(/[’‘]/g,"'");
+
+  if(/\s{2,}/.test(raw))
+    issues.push(`${label}: 단어 사이의 <b>불필요한 띄어쓰기</b>를 한 칸으로 고쳐 주세요.`);
+
+  if(/\s+[,.!?]/.test(raw))
+    issues.push(`${label}: 문장부호 <b>앞의 공백</b>을 지워 주세요.`);
+
+  const safe=raw.replace(/\b[ap]\.m\./gi,'TIME');
+  if(/[.!?][A-Za-z]/.test(safe))
+    issues.push(`${label}: 문장부호 뒤에는 <b>한 칸 띄어쓰기</b>가 필요합니다.`);
+
+  const typoMap={
+    'teh':'the','becuse':'because','becuase':'because','becasue':'because',
+    'yesturday':'yesterday','yesteray':'yesterday',
+    'classrom':'classroom','clasroom':'classroom',
+    'windo':'window','windoe':'window','windoww':'window',
+    'danial':'Daniel','danil':'Daniel',
+    'intervew':'interview','interveiw':'interview',
+    'accidently':'accidentally','acidentally':'accidentally',
+    'acident':'accident','scard':'scared','techer':'teacher',
+    'apoligized':'apologized','apologied':'apologized',
+    'stripped':'striped','hodie':'hoodie','glases':'glasses',
+    'broked':'broke','happend':'happened',
+    'playng':'playing','carefull':'careful'
+  };
+
+  const rawTokens=low.replace(/[^a-z']+/g,' ')
+    .split(/\s+/).filter(Boolean);
+
+  rawTokens.forEach(w=>{
+    if(typoMap[w]){
+      issues.push(
+        `${label}: <b>${w}</b> → <b>${typoMap[w]}</b> 철자를 확인해 주세요.`
+      );
+    }
+  });
+
+  const joined={
+    'inthe':'in the','theclassroom':'the classroom',
+    'afterlunch':'after lunch','thewindow':'the window',
+    'classroomwindow':'classroom window','danielsaid':'Daniel said',
+    'hesaid':'he said','saidthat':'said that',
+    'wasplaying':'was playing','smallball':'small ball',
+    'toldhis':'told his','toldthe':'told the',
+    'histeacher':'his teacher','wasbroken':'was broken',
+    'didnot':'did not','didntmean':"didn't mean",
+    'fromnow':'from now','morecareful':'more careful',
+    'stripedhoodie':'striped hoodie',
+    'wearingglasses':'wearing glasses',
+    'blackandwhite':'black and white',
+    'intheinterview':'in the interview'
+  };
+
+  const compact=low.replace(/[.,!?;:'"’‘-]/g,' ')
+    .split(/\s+/).filter(Boolean);
+
+  compact.forEach(w=>{
+    if(joined[w]){
+      issues.push(
+        `${label}: <b>${w}</b> → <b>${joined[w]}</b>처럼 띄어 써 주세요.`
+      );
+    }
+  });
+
+  if(/\bdoesnt\b/.test(low))
+    issues.push(`${label}: <b>doesnt</b> → <b>doesn't</b>로 써 주세요.`);
+
+  if(/\bdidnt\b/.test(low))
+    issues.push(`${label}: <b>didnt</b> → <b>didn't</b>로 써 주세요.`);
+
+  if(/\bdont\b/.test(low))
+    issues.push(`${label}: <b>dont</b> → <b>don't</b>로 써 주세요.`);
+
+  const chunks=raw.split(/(?<=[.!?])\s+/)
+    .map(x=>x.trim()).filter(Boolean);
+
+  chunks.forEach((s,idx)=>{
+    const first=s.match(/[A-Za-z]/);
+    if(first && first[0]!==first[0].toUpperCase()){
+      issues.push(
+        `${label}: ${idx+1}번째 문장의 <b>첫 글자를 대문자</b>로 고쳐 주세요.`
+      );
+    }
+  });
+
+  return [...new Set(issues)];
+}
+
+function allNewspaperMechanicalIssues(){
+  return [
+    ...articleMechanicalIssues($('sumWhat').value,'What happened?'),
+    ...articleMechanicalIssues($('sumWhen').value,'When did it happen?'),
+    ...articleMechanicalIssues($('sumWhere').value,'Where did it happen?'),
+    ...articleMechanicalIssues($('sumOther').value,'Other Information'),
+    ...articleMechanicalIssues($('headline').value,'Headline'),
+    ...articleMechanicalIssues($('article').value,'Main Article')
+  ];
+}
+
+function newsArticleAnalysis(){
+  const article=$('article').value.trim();
+  const headline=$('headline').value.trim();
+  const what=$('sumWhat').value.trim();
+  const when=$('sumWhen').value.trim();
+  const where=$('sumWhere').value.trim();
+  const other=$('sumOther').value.trim();
+  const t=norm(article);
+
+  const good=[],issues=[],critical=[];
+
+  // Form
+  if(headline) good.push('Headline이 있음');
+  else critical.push('Headline을 작성해 주세요.');
+
+  if(what&&when&&where&&other) good.push('Summary of the Case 4항목 작성');
+  else critical.push('Summary of the Case의 4항목을 모두 작성해 주세요.');
+
+  const sc=articleSentenceCount(article);
+  if(sc>=5) good.push(`Main Article ${sc}문장`);
+  else critical.push('Main Article을 최소 5문장 정도로 작성해 주세요.');
+
+  // Lead: what / when / where
+  const hasEvent=has(t,['window']) && (
+    has(t,['broke','broken','break','was broken','window broke'])
+  );
+  const hasWhen=has(t,['yesterday','after lunch','1 10','1:10']);
+  const hasWhere=has(t,['classroom','in the class','our class']);
+
+  if(hasEvent&&hasWhen&&hasWhere){
+    good.push('Lead에 What · When · Where가 드러남');
+  }else{
+    const miss=[];
+    if(!hasEvent) miss.push('무슨 일이 일어났는지(What)');
+    if(!hasWhen) miss.push('언제 일어났는지(When)');
+    if(!hasWhere) miss.push('어디에서 일어났는지(Where)');
+    critical.push(`기사 첫부분에 ${miss.join(', ')}가 드러나도록 해 보세요.`);
+  }
+
+  // Interview usage
+  const hasDaniel=has(t,['daniel']);
+  const reporting=has(t,[
+    'daniel said','daniel told','according to daniel',
+    'in the interview','during the interview','daniel explained'
+  ]);
+  const interviewFacts=countInterviewFacts(article);
+
+  if(hasDaniel) good.push('Daniel이 기사에 등장함');
+  else critical.push('기사에 Daniel이 등장해야 합니다.');
+
+  if(reporting) good.push('인터뷰를 기사 문장으로 전달함');
+  else critical.push('Daniel과의 인터뷰임이 드러나도록 <b>Daniel said ...</b> 또는 <b>In the interview, Daniel said ...</b> 같은 방식으로 내용을 전달해 보세요.');
+
+  if(interviewFacts>=2){
+    good.push(`인터뷰에서 확인한 구체적 정보 ${interviewFacts}개 이상 활용`);
+  }else{
+    critical.push('Daniel과의 인터뷰에서 새롭게 확인한 구체적인 정보를 <b>2개 이상</b> 기사에 활용해 보세요.');
+  }
+
+  // Ending / aftermath
+  const ending=has(t,[
+    'after that','later','finally','scared','sorry','apologized','apologised',
+    'teacher','learned','learnt','careful','ran out','ran away'
+  ]);
+  if(ending) good.push('사건 후 내용 또는 마무리가 있음');
+  else issues.push('마지막에는 사건 후 Daniel의 행동·감정·사과·배운 점 중 하나로 마무리하면 기사답게 완성돼.');
+
+  // Detect pasted inference/elimination paragraph.
+  const suspectNames=['alex','ben','chris'].filter(n=>t.includes(n)).length;
+  const eliminationCount=[
+    'not the criminal','cannot be the criminal','can not be the criminal',
+    'is not the criminal','could not be the criminal'
+  ].reduce((sum,p)=>sum+(t.split(p).length-1),0);
+
+  const inferenceDominant=(suspectNames>=2 && eliminationCount>=2);
+
+  if(inferenceDominant && (!reporting || interviewFacts<2)){
+    critical.push('<b>지난 차시의 용의자 소거 글이 중심</b>으로 보입니다. 이번에는 Alex·Ben·Chris를 하나씩 소거하는 글이 아니라, 사건을 요약하고 Daniel과의 인터뷰에서 알아낸 내용을 독자에게 전달하는 <b>신문기사</b>로 다시 구성해 주세요.');
+  }else if(inferenceDominant){
+    issues.push('용의자 소거 내용은 조사 과정으로 짧게 넣을 수 있지만, 기사 전체가 그 내용에 치우치지 않도록 인터뷰 결과를 중심으로 구성해 보세요.');
+  }
+
+  // Q&A dump detection
+  if((article.match(/\bQ\s*:/gi)||[]).length>=2 || (article.match(/\bA\s*:/gi)||[]).length>=2){
+    critical.push('인터뷰 Q&A를 그대로 붙여 넣기보다, Daniel의 대답을 <b>신문기사 문장</b>으로 바꾸어 작성해 주세요.');
+  }
+
+  // Final Draft 전 철자·띄어쓰기·대문자·문장부호를 반드시 교정한다.
+  const mechanics=allNewspaperMechanicalIssues();
+
+  if(mechanics.length){
+    critical.push(
+      '<b>Proofreading이 필요합니다.</b> Final Newspaper를 만들기 전에 아래 표현을 고쳐 주세요:<br>↳ '+
+      mechanics.join('<br>↳ ')
+    );
+  }else{
+    good.push('철자·띄어쓰기·대문자·문장부호 점검 완료');
+  }
+
+  return {
+    good,issues,critical,
+    pass:critical.length===0
+  };
+}
+
 function articleCheck(){
- const a=$('article').value.trim(),issues=[],good=[];
- [['sumWhat','What happened?'],['sumWhen','When did it happen?'],['sumWhere','Where did it happen?'],['sumOther','Other Information']].forEach(([id,label])=>$(id).value.trim()?good.push(label+' 작성'):issues.push(label+'를 작성해 보세요.'));
- $('headline').value.trim()?good.push('Headline 작성'):issues.push('Headline을 작성해 보세요.');
- a.split(/[.!?]+/).filter(x=>x.trim()).length>=5?good.push('기사 5문장 이상'):issues.push('Main Article을 최소 5문장 정도로 작성해 보세요.');
- const t=norm(a);has(t,['daniel'])?good.push('Daniel 인터뷰 내용 활용'):issues.push('기사에 Daniel과의 인터뷰 내용을 넣어 보세요.');
- has(t,['window'])?good.push('사건 핵심 포함'):issues.push('창문 사건이 드러나도록 해 보세요.');
- $('articleFeedback').style.display='block';$('articleFeedback').innerHTML=`<b>잘 된 점</b><br>${good.length?'✓ '+good.join('<br>✓ '):'-'}<br><br><b>확인할 점</b><br>${issues.length?'• '+issues.join('<br>• '):'내용 요소가 잘 갖추어졌어요.'}<br><br><span class="mini">챗봇이 기사를 대신 고쳐 쓰지는 않습니다.</span>`;
+  const r=newsArticleAnalysis();
+  const box=$('articleFeedback');
+  box.style.display='block';
+
+  articleApproved=r.pass;
+  approvedArticleSignature=r.pass?currentArticleSignature():'';
+
+  $('makeFinal').disabled=!r.pass;
+  $('makeFinal').textContent=r.pass?'Final Newspaper 만들기':'기사 점검 후 Final Newspaper 만들기';
+
+  box.innerHTML=`<b>Newspaper Check</b><br><br>
+    <b>✓ 잘 된 점</b><br>
+    ${r.good.length?'✓ '+r.good.join('<br>✓ '):'아직 확인할 요소가 있어.'}
+    <br><br>
+    <b>${r.critical.length?'⚠ 꼭 수정해야 할 점':'확인 결과'}</b><br>
+    ${r.critical.length?'• '+r.critical.join('<br>• '):'<b>신문기사의 핵심 구조가 잘 갖추어졌어. Final Newspaper를 만들 수 있어.</b>'}
+    ${r.issues.length?'<br><br><b>더 자연스럽게 다듬을 점</b><br>• '+r.issues.join('<br>• '):''}
+    <br><br><span class="mini">챗봇은 완성 기사를 대신 써주지 않습니다. <b>내용뿐 아니라 철자와 띄어쓰기 오류도 모두 고친 뒤</b> 다시 기사 점검을 받아야 Final Newspaper를 만들 수 있습니다.</span>`;
+
+  saveProgress();
 }
+
 function makeFinal(){
- if(!$('headline').value.trim()||!$('article').value.trim()){articleCheck();return;}
- $('step4').style.display='none';$('finalScreen').style.display='block';
- $('paperHeadline').textContent=$('headline').value.trim();$('paperArticle').textContent=$('article').value.trim();
- $('pWhat').textContent=$('sumWhat').value.trim();$('pWhen').textContent=$('sumWhen').value.trim();$('pWhere').textContent=$('sumWhere').value.trim();$('pOther').textContent=$('sumOther').value.trim();
- $('pInterview').innerHTML=questions.map((x,i)=>`Q: ${esc(x.q)}<br>A: ${esc(answers[i])}`).join('<br><br>');
- window.scrollTo(0,0);
+  // Final button을 누르는 순간에도 다시 검사한다.
+  const r=newsArticleAnalysis();
+  const signature=currentArticleSignature();
+
+  if(!r.pass || !articleApproved || approvedArticleSignature!==signature){
+    articleApproved=false;
+    approvedArticleSignature='';
+    $('makeFinal').disabled=true;
+    $('makeFinal').textContent='기사 점검 후 Final Newspaper 만들기';
+    articleCheck();
+    return;
+  }
+
+  $('step4').style.display='none';
+  $('finalScreen').style.display='block';
+
+  $('paperHeadline').textContent=$('headline').value.trim();
+  $('paperArticle').textContent=$('article').value.trim();
+  $('pWhat').textContent=$('sumWhat').value.trim();
+  $('pWhen').textContent=$('sumWhen').value.trim();
+  $('pWhere').textContent=$('sumWhere').value.trim();
+  $('pOther').textContent=$('sumOther').value.trim();
+  $('pInterview').innerHTML=questions.map((x,i)=>`Q: ${esc(x.q)}<br>A: ${esc(answers[i])}`).join('<br><br>');
+
+  bindAutosaveFields();
+  window.scrollTo(0,0);
+  saveProgress();
 }
+
 $('toStep2').onclick=()=>{
   const result=analyzeStep1Feedback();
   $('step1Feedback').style.display='block';
   $('step1Feedback').innerHTML=result.html;
   $('proceedStep2').style.display=result.ok?'inline-block':'none';
+  saveProgress();
 };
 $('proceedStep2').onclick=()=>{
   $('step1').style.display='none';
   $('step2').style.display='block';
   setStep(2,'Write Questions');
   renderQuestionCards();
+  bindAutosaveFields();
+  saveProgress();
 };
-$('addQuestion').onclick=()=>{questionCount++;renderQuestionCards();questions=[];$('toStep3').disabled=true;};
-$('toStep3').onclick=prepareInterview;$('toStep4').onclick=auditInterviewEvidence;$('supplementBtn').onclick=supplementQuestions;$('articleBtn').onclick=showArticle;$('checkArticle').onclick=articleCheck;$('makeFinal').onclick=makeFinal;
-$('captureBtn').onclick=()=>{document.body.classList.add('capture');$('captureBtn').textContent='일반 화면으로 돌아가기';$('captureBtn').onclick=()=>location.reload();};
-$('backBtn').onclick=()=>{$('finalScreen').style.display='none';$('step4').style.display='block';window.scrollTo(0,0);};
+$('addQuestion').onclick=()=>{
+  questionCount++;
+  renderQuestionCards();
+  $('toStep3').disabled=true;
+  saveProgress();
+};
+$('toStep3').onclick=prepareInterview;
+$('toStep4').onclick=auditInterviewEvidence;
+$('supplementBtn').onclick=supplementQuestions;
+$('articleBtn').onclick=showArticle;
+$('checkArticle').onclick=articleCheck;
+$('makeFinal').onclick=makeFinal;
+$('captureBtn').onclick=()=>{
+  document.body.classList.add('capture');
+  $('captureBtn').textContent='일반 화면으로 돌아가기';
+  $('captureBtn').onclick=()=>{
+    document.body.classList.remove('capture');
+    $('captureBtn').textContent='캡처용 화면 보기';
+    saveProgress();
+  };
+};
+$('backBtn').onclick=()=>{
+  $('finalScreen').style.display='none';
+  $('step4').style.display='block';
+  setStep(4,'Newspaper Writing');
+  window.scrollTo(0,0);
+  saveProgress();
+};
+$('resetAll').onclick=()=>{
+  if(confirm('현재 작성 내용을 모두 지우고 처음부터 다시 시작할까요?')){
+    clearSavedProgress();
+    location.reload();
+  }
+};
+
+bindAutosaveFields();
+if(!restoreProgress()){
+  setStep(1,'Example Interview');
+  bindAutosaveFields();
+}
 </script>
 </body></html>
